@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AppError } from 'src/common/constants/errors';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -34,11 +36,17 @@ export class UsersService {
     return await this.usersRepository.findOne({ where: { id } });
   }
 
-  async createUser(email: string, password: number): Promise<User> {
-    const user = new User();
-    user.email = email;
-    user.password = password;
-    return await this.usersRepository.save(user);
+  async createUser(userDto: CreateUserDto): Promise<CreateUserDto> {
+    const { email, password } = userDto;
+    await this.usersRepository.save({
+      email,
+      password,
+    });
+    return userDto;
+  }
+
+  async findUserByEmail(email: string): Promise<User> {
+    return await this.usersRepository.findOne({ where: { email } });
   }
 
   async updateUser(id: number, email: string, password: number): Promise<User> {
@@ -54,11 +62,6 @@ export class UsersService {
   }
 
   async getUserRating(userId: number): Promise<number> {
-    //const user = await this.usersRepository.findOne({
-    //where: { id: userId },
-    //relations: ['posts'],
-    //});
-    //return user.posts.reduce((acc, post) => acc + post.rating, 0);
     return 0;
   }
 }

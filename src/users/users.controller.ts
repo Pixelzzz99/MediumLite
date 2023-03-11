@@ -1,13 +1,24 @@
-import { Controller, Get, Param, Query, UseGuards, Post } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  Post,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @UseGuards(AuthGuard)
+  // @UseGuards(AuthGuard)
   async getUsers(@Query('limit') limit = 10, @Query('offset') offset = 0) {
     return await this.usersService.getUsers(+limit, +offset);
   }
@@ -34,7 +45,7 @@ export class UsersController {
     return await this.usersService.getUserRating(+userId);
   }
 
-  @Post(':id')
+  @Put(':id')
   @UseGuards(AuthGuard)
   async updateUser(
     @Param('id') id: number,
@@ -44,16 +55,13 @@ export class UsersController {
     return await this.usersService.updateUser(+id, email, +password);
   }
 
-  @Post()
-  @UseGuards(AuthGuard)
-  async createUser(
-    @Query('email') email: string,
-    @Query('password') password: number,
-  ) {
-    return await this.usersService.createUser(email, +password);
+  @Post('create-user')
+  // @UseGuards(AuthGuard)
+  async createUsers(@Body() userDto: CreateUserDto) {
+    return await this.usersService.createUser(userDto);
   }
 
-  @Post(':id/delete')
+  @Delete(':id')
   @UseGuards(AuthGuard)
   async deleteUser(@Param('id') id: number) {
     return await this.usersService.deleteUser(+id);
