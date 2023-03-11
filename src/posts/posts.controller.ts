@@ -10,6 +10,7 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
+import { UsersService } from 'src/users/users.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -17,7 +18,10 @@ import { PostsService } from './posts.service';
 
 @Controller('posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @UseGuards(AuthGuard)
   @Get()
@@ -29,6 +33,15 @@ export class PostsController {
   @Get(':id')
   async findOne(@Param('id') id: number) {
     return await this.postsService.getPostById(id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get(':id/like')
+  async likePost(@Param('id') id: number, @Req() request) {
+    const curUser = request.user;
+    const post = await this.postsService.updatePostRating(id);
+    const user = await this.usersService.updateUserRating(curUser.id);
+    return post;
   }
 
   @UseGuards(AuthGuard)

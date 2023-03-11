@@ -4,12 +4,14 @@ import { Repository } from 'typeorm';
 import { Post } from '../entities/post.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { ReadingTimeService } from './reading-time.service';
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(Post)
     private readonly postsRepository: Repository<Post>,
+    private readonly readingTimeService: ReadingTimeService,
   ) {}
 
   async getAllPosts(limit: number, offset: number): Promise<Post[]> {
@@ -29,6 +31,9 @@ export class PostsService {
       title: postDto.title,
       content: postDto.content,
       author: user.id,
+      readingTime: this.readingTimeService.calculateReadingTime(
+        postDto.content,
+      ),
     });
   }
 
@@ -43,7 +48,11 @@ export class PostsService {
     });
     console.log(postToUpdate);
     if (postToUpdate.author.id === user.id) {
-      await this.postsRepository.update(id, post);
+      await this.postsRepository.update(id, {
+        title: post.title,
+        content: post.content,
+        readingTime: this.readingTimeService.calculateReadingTime(post.content),
+      });
       return post;
     }
     return null;
@@ -59,5 +68,14 @@ export class PostsService {
       return true;
     }
     return false;
+  }
+
+  async updatePostRating(id: number): Promise<Post> {
+    const post = await this.postsRepository.findOne({ where: { id } });
+    const newRating = post.rating + 1;
+    await this.postsRepository.update(id, {
+      rating: newRating,
+    });
+    return await this.postsRepository.findOne({ where: { id } });
   }
 }

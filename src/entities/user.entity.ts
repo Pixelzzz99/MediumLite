@@ -20,6 +20,11 @@ export class User extends BaseEntity {
   @Column()
   password: number;
 
+  @Column({
+    default: 0,
+  })
+  rating: number;
+
   @OneToMany(() => Post, (post) => post.author)
   posts: Post[];
 

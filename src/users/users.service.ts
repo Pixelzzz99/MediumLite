@@ -68,4 +68,11 @@ export class UsersService {
     await this.usersRepository.remove(user);
     return true;
   }
+
+  async updateUserRating(id: number): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    user.rating = user.rating + 1;
+    await this.usersRepository.save(user);
+    return user;
+  }
 }
