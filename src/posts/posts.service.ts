@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from '../entities/post.entity';
+import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 @Injectable()
 export class PostsService {
@@ -10,25 +12,52 @@ export class PostsService {
     private readonly postsRepository: Repository<Post>,
   ) {}
 
-  async findAll(): Promise<Post[]> {
-    return await this.postsRepository.find();
+  async getAllPosts(limit: number, offset: number): Promise<Post[]> {
+    return await this.postsRepository.find({
+      skip: offset,
+      take: limit,
+      relations: ['author'],
+    });
   }
 
-  async findOne(id: number): Promise<Post> {
+  async getPostById(id: number): Promise<Post> {
     return await this.postsRepository.findOne({ where: { id } });
   }
 
-  async create(post: Post): Promise<Post> {
-    return await this.postsRepository.save(post);
+  async createPost(postDto: CreatePostDto, user) {
+    return await this.postsRepository.save({
+      title: postDto.title,
+      content: postDto.content,
+      author: user.id,
+    });
   }
 
-  async update(id: number, post: Post): Promise<Post> {
-    await this.postsRepository.update(id, post);
-    return await this.postsRepository.findOne({ where: { id } });
+  async updatePost(
+    id: number,
+    post: UpdatePostDto,
+    user,
+  ): Promise<UpdatePostDto> {
+    const postToUpdate = await this.postsRepository.findOne({
+      where: { id },
+      relations: ['author'],
+    });
+    console.log(postToUpdate);
+    if (postToUpdate.author.id === user.id) {
+      await this.postsRepository.update(id, post);
+      return post;
+    }
+    return null;
   }
 
-  async delete(id: number): Promise<Post> {
-    const post = await this.postsRepository.findOne({ where: { id } });
-    return await this.postsRepository.remove(post);
+  async deletePost(id: number, user): Promise<boolean> {
+    const post = await this.postsRepository.findOne({
+      where: { id },
+      relations: ['author'],
+    });
+    if (post.author.id === user.id) {
+      await this.postsRepository.remove(post);
+      return true;
+    }
+    return false;
   }
 }

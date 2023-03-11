@@ -4,9 +4,6 @@ export class AuthUserResponse {
   @IsEmail()
   email: string;
 
-  @IsNumber()
-  password: number;
-
   @IsString()
   token: string;
 }

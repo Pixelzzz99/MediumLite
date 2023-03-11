@@ -4,6 +4,7 @@ import { AppError } from 'src/common/constants/errors';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -49,19 +50,22 @@ export class UsersService {
     return await this.usersRepository.findOne({ where: { email } });
   }
 
-  async updateUser(id: number, email: string, password: number): Promise<User> {
-    const user = await this.getUserById(id);
-    user.email = email;
-    user.password = password;
-    return await this.usersRepository.save(user);
+  async updateUser(
+    email: string,
+    userDto: UpdateUserDto,
+  ): Promise<UpdateUserDto> {
+    const user = await this.findUserByEmail(email);
+    if (!user) {
+      throw new BadRequestException(AppError.USER_NOT_FOUND);
+    }
+    const { password } = userDto;
+    await this.usersRepository.update(user.id, { password });
+    return userDto;
   }
 
-  async deleteUser(id: number): Promise<User> {
-    const user = await this.getUserById(id);
-    return await this.usersRepository.remove(user);
-  }
-
-  async getUserRating(userId: number): Promise<number> {
-    return 0;
+  async deleteUser(email: string): Promise<boolean> {
+    const user = await this.findUserByEmail(email);
+    await this.usersRepository.remove(user);
+    return true;
   }
 }

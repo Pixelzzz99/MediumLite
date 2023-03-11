@@ -30,10 +30,9 @@ export class AuthService {
     if (user.password !== password) {
       throw new BadRequestException(AppError.INVALID_LOGIN);
     }
-    const token = await this.tokenService.generateToken(userDto.email);
+    const token = await this.tokenService.generateToken(user);
     return {
       email: user.email,
-      password: user.password,
       token: token,
     };
   }

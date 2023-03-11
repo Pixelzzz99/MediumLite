@@ -6,31 +6,26 @@ import {
   Body,
   UseGuards,
   Post,
-  Put,
+  Patch,
   Delete,
+  Req,
 } from '@nestjs/common';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../auth/guards/auth.guard';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @UseGuards(AuthGuard)
   @Get()
-  // @UseGuards(AuthGuard)
   async getUsers(@Query('limit') limit = 10, @Query('offset') offset = 0) {
     return await this.usersService.getUsers(+limit, +offset);
   }
 
-  @Get(':id')
   @UseGuards(AuthGuard)
-  async getUserById(@Param('id') id: number) {
-    return await this.usersService.getUserById(id);
-  }
-
   @Get(':id/posts')
-  @UseGuards(AuthGuard)
   async getUsersPosts(
     @Param('id') userId: number,
     @Query('limit') limit = 10,
@@ -39,31 +34,20 @@ export class UsersController {
     return await this.usersService.getUsersPosts(+userId, +limit, +offset);
   }
 
-  @Get(':id/rating')
   @UseGuards(AuthGuard)
-  async getUserRating(@Param('id') userId: number) {
-    return await this.usersService.getUserRating(+userId);
-  }
-
-  @Put(':id')
-  @UseGuards(AuthGuard)
+  @Patch()
   async updateUser(
-    @Param('id') id: number,
-    @Query('email') email: string,
-    @Query('password') password: number,
-  ) {
-    return await this.usersService.updateUser(+id, email, +password);
+    @Body() updateDto: UpdateUserDto,
+    @Req() request,
+  ): Promise<UpdateUserDto> {
+    const user = request.user;
+    return await this.usersService.updateUser(user.email, updateDto);
   }
 
-  @Post('create-user')
-  // @UseGuards(AuthGuard)
-  async createUsers(@Body() userDto: CreateUserDto) {
-    return await this.usersService.createUser(userDto);
-  }
-
-  @Delete(':id')
   @UseGuards(AuthGuard)
-  async deleteUser(@Param('id') id: number) {
-    return await this.usersService.deleteUser(+id);
+  @Delete()
+  async deleteUser(@Req() request): Promise<boolean> {
+    const user = request.user;
+    return await this.usersService.deleteUser(user.email);
   }
 }
